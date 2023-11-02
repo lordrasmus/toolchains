@@ -68,6 +68,34 @@ if grep -q 'ADK_TARGET_CPU_TYPE' .config; then
 	tc2="toolchain-"$arch"_"$tmp"-gcc-"$gcc
 fi
 
+if grep -q 'ADK_TARGET_FLOAT' .config; then
+	tmp=$(grep ADK_TARGET_FLOAT= .config)
+	tmp="${tmp/ADK_TARGET_FLOAT=}"
+	tmp="${tmp/\"}"
+	tmp="${tmp/\"}"
+	sysroot_path=$sysroot_path"_"$tmp
+	tc2=$tc2"_"$tmp
+fi
+
+if grep -q 'ADK_TARGET_ABI' .config; then
+        tmp=$(grep ADK_TARGET_ABI= .config)
+        tmp="${tmp/ADK_TARGET_ABI=}"
+        tmp="${tmp/\"}"
+        tmp="${tmp/\"}"
+        sysroot_path=$sysroot_path"_"$tmp
+        tc2=$tc2"_"$tmp
+fi
+
+if grep -q 'ADK_TARGET_INSTRUCTION_SET' .config; then
+        tmp=$(grep ADK_TARGET_INSTRUCTION_SET= .config)
+        tmp="${tmp/ADK_TARGET_INSTRUCTION_SET=}"
+        tmp="${tmp/\"}"
+        tmp="${tmp/\"}"
+        sysroot_path=$sysroot_path"_"$tmp
+        tc2=$tc2"_"$tmp
+fi
+
+
 if [ ! -e $sysroot_path/usr/lib/crt1.o ] ; then
 	echo "Sysroot unvollständig : suche $sysroot_path"
 	exit 1
