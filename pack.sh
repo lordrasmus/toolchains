@@ -1,8 +1,8 @@
 #!/bin/bash
 
 
-arch=$(grep ADK_TARGET_CPU_TYPE= .config)
-arch="${arch/ADK_TARGET_CPU_TYPE=}"
+arch=$(grep ADK_TARGET_CPU_ARCH= .config)
+arch="${arch/ADK_TARGET_CPU_ARCH=}"
 arch="${arch/\"}"
 arch="${arch/\"}"
 
@@ -40,22 +40,21 @@ lib="${lib/\"}"
 
 
 
-
+tc2="toolchain-"$arch"-gcc-"$gcc
 
 build_path="toolchain_"$target"_"$lib
 sysroot_path="target_"$target"_"$lib
-tc2="toolchain-"$arch"-gcc-"$gcc
 
-#if grep -q 'ADK_TARGET_CPU_TYPE' .config; then
-#        tmp=$(grep ADK_TARGET_CPU_TYPE= .config)
-#        tmp="${tmp/ADK_TARGET_CPU_TYPE=}"
-#        tmp="${tmp/\"}"
-#        tmp="${tmp/\"}"
-#
-#        build_path=$build_path"_"$tmp
-#        sysroot_path=$sysroot_path"_"$tmp
-#        tc2="toolchain-"$arch"_"$tmp"-gcc-"$gcc
-#fi
+if grep -q 'ADK_TARGET_CPU_TYPE' .config; then
+        tmp=$(grep ADK_TARGET_CPU_TYPE= .config)
+        tmp="${tmp/ADK_TARGET_CPU_TYPE=}"
+        tmp="${tmp/\"}"
+        tmp="${tmp/\"}"
+
+        build_path=$build_path"_"$tmp
+        sysroot_path=$sysroot_path"_"$tmp
+        tc2="toolchain-"$arch"_"$tmp"-gcc-"$gcc
+fi
 
 if grep -q 'ADK_TARGET_FLOAT' .config; then
         tmp=$(grep ADK_TARGET_FLOAT= .config)
@@ -95,19 +94,6 @@ fi
 if grep -q 'ADK_TARGET_BINFMT' .config; then
         tmp=$(grep ADK_TARGET_BINFMT= .config)
         tmp="${tmp/ADK_TARGET_BINFMT=}"
-        tmp="${tmp/\"}"
-        tmp="${tmp/\"}"
-
-        if [[ $tmp != "" ]] ; then
-                build_path=$build_path"_"$tmp
-                sysroot_path=$sysroot_path"_"$tmp
-                tc2=$tc2"_"$tmp
-        fi
-fi
-
-if grep -q 'ADK_TARGET_CPU_ARCH' .config; then
-        tmp=$(grep ADK_TARGET_CPU_ARCH= .config)
-        tmp="${tmp/ADK_TARGET_CPU_ARCH=}"
         tmp="${tmp/\"}"
         tmp="${tmp/\"}"
 
