@@ -15,6 +15,10 @@ if [[ $(grep ADK_TOOLCHAIN_GCC_11 .config) == "ADK_TOOLCHAIN_GCC_11=y" ]]; then 
 if [[ $(grep ADK_TOOLCHAIN_GCC_12 .config) == "ADK_TOOLCHAIN_GCC_12=y" ]]; then   gcc="12"  ; fi
 if [[ $(grep ADK_TOOLCHAIN_GCC_13 .config) == "ADK_TOOLCHAIN_GCC_13=y" ]]; then   gcc="13"  ; fi
 
+if [[ $(grep ADK_TOOLCHAIN_GCC_KVX .config) == "ADK_TOOLCHAIN_GCC_KVX=y" ]]; then   gcc="kvx"  ; fi
+
+
+
 if [[ $gcc == "none" ]] ; then echo "No GCC detect"; exit 1 ; fi
 
 echo ""
