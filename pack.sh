@@ -85,6 +85,17 @@ if grep -q 'ADK_TARGET_INSTRUCTION_SET' .config; then
         tc2=$tc2"_"$tmp
 fi
 
+if grep -q 'ADK_TARGET_BINFMT' .config; then
+        tmp=$(grep ADK_TARGET_BINFMT= .config)
+        tmp="${tmp/ADK_TARGET_BINFMT=}"
+        tmp="${tmp/\"}"
+        tmp="${tmp/\"}"
+
+        build_path=$build_path"_"$tmp
+        sysroot_path=$sysroot_path"_"$tmp
+        tc2=$tc2"_"$tmp
+fi
+
 if grep -q 'BUSYBOX_NOMMU=y' .config; then
         tmp=$(grep BUSYBOX_NOMMU=y .config)
         tmp="${tmp/BUSYBOX_NOMMU=y}"
@@ -112,6 +123,7 @@ echo "Toolchain : $build_path"
 echo "Sysroot   : $sysroot_path"
 echo -e "Archive   : \033[01;32m$tc2\033[00m"
 
+exit 1
 
 tc=$build_path
 
