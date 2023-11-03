@@ -127,7 +127,7 @@ echo "Toolchain : $build_path"
 echo "Sysroot   : $sysroot_path"
 echo -e "Archive   : \033[01;32m$tc2\033[00m"
 
-exit 1
+
 
 tc=$build_path
 
@@ -196,4 +196,4 @@ else
     echo "Invalid input. Please enter 'y' or 'n'."
     exit 1
 fi
-( cd toolchains; git add $tc2.tar.xz; git commit -m "toolchain $tc2" )
+( cd toolchains; git add pack.sh ; git add $tc2.tar.xz; git commit -m "toolchain $tc2" ; git push  )
