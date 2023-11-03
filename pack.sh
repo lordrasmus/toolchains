@@ -168,6 +168,8 @@ rm -f $tc2.tar.xz
 tar -cvf $tc2.tar $tc2
 xz -e -9 -v $tc2.tar
 
+find $tc2/usr/bin
+
 echo -e "Archive   : \033[01;32m$tc2\033[00m"
 
 
