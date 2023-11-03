@@ -79,10 +79,12 @@ if grep -q 'ADK_TARGET_INSTRUCTION_SET' .config; then
         tmp="${tmp/ADK_TARGET_INSTRUCTION_SET=}"
         tmp="${tmp/\"}"
         tmp="${tmp/\"}"
-
-        build_path=$build_path"_"$tmp
-        sysroot_path=$sysroot_path"_"$tmp
-        tc2=$tc2"_"$tmp
+        
+        if [[ $tmp != "" ]] ; then
+                build_path=$build_path"_"$tmp
+                sysroot_path=$sysroot_path"_"$tmp
+                tc2=$tc2"_"$tmp
+        fi
 fi
 
 if grep -q 'ADK_TARGET_BINFMT' .config; then
@@ -91,9 +93,11 @@ if grep -q 'ADK_TARGET_BINFMT' .config; then
         tmp="${tmp/\"}"
         tmp="${tmp/\"}"
 
-        build_path=$build_path"_"$tmp
-        sysroot_path=$sysroot_path"_"$tmp
-        tc2=$tc2"_"$tmp
+        if [[ $tmp != "" ]] ; then
+                build_path=$build_path"_"$tmp
+                sysroot_path=$sysroot_path"_"$tmp
+                tc2=$tc2"_"$tmp
+        fi
 fi
 
 if grep -q 'BUSYBOX_NOMMU=y' .config; then
