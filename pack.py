@@ -43,7 +43,7 @@ for l in config_lines:
         
         values[tmp[0]] = tmp[1]
 
-
+pprint( values )
 
 arch=values["ADK_TARGET_CPU_ARCH"]
 
@@ -85,9 +85,17 @@ if 'ADK_TARGET_CPU_TYPE' in values:
                 build_path += "_" + tmp
                 sysroot_path +=  "_" + tmp
                 tc2="toolchain-" + arch + "_" + tmp + "-gcc-" + gcc
+                
+        if arch == "mipsel" and tmp == "mips32":
+                tc2="toolchain-mips32el-gcc-" + gcc
 
+if 'ADK_TARGET_ENDIAN_SUFFIX' in values:
+         build_path += "" + values["ADK_TARGET_ENDIAN_SUFFIX"]
+         sysroot_path += "" + values["ADK_TARGET_ENDIAN_SUFFIX"]
 
-print( "Buildpath : "+ build_path )
+#print( "Buildpath : "+ build_path )
+#print( "sysroot_path : "+ sysroot_path )
+print( "tc2 :" + tc2 )
 
 if 'ADK_TARGET_FLOAT' in values:
         build_path += "_" + values["ADK_TARGET_FLOAT"]
@@ -125,6 +133,11 @@ if 'BUSYBOX_NOMMU' in values:
 
 
 
+print( "" )
+print( "GCC       : " + gcc  )
+print( "ARCH      : " + arch )
+print( "" )
+
 if not os.path.exists( build_path + "/usr/bin" ):
         print( "" )
         print(  "build_path unvollständig : suche \n\033[01;32m" +build_path +"/usr/bin\033[00m")
@@ -141,10 +154,7 @@ if not os.path.exists( sysroot_path + "/usr/lib/crt1.o" ):
         sys.exit( 1)
 
 
-print( "" )
-print( "GCC       : " + gcc  )
-print( "ARCH      : " + arch )
-print( "" )
+
 
 print( "Buildpath : "+ build_path )
 print( "Sysroot   : "+ sysroot_path )
@@ -219,5 +229,5 @@ else:
     print(" Invalid input. Please enter 'y' or 'n'.")
     sys.exit( 1 )
 
-os.system('cd toolchains; git add pack.sh ; git add ' + tc2 + '.tar.xz; git commit -m "toolchain ' + tc2 + '" ; git push  ')
+os.system('cd toolchains; git add pack.py ; git add ' + tc2 + '.tar.xz; git commit -m "toolchain ' + tc2 + '" ; git push  ')
 
