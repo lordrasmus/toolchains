@@ -153,6 +153,14 @@ if not os.path.exists( sysroot_path + "/usr/lib/crt1.o" ):
         print( "" )
         sys.exit( 1)
 
+print( sysroot_path )
+if os.path.exists( sysroot_path + "/usr/lib/!m4"):
+        print(" !! ERROR !m4 im sysroot gefunden. fixing")
+        os.system("mv " + sysroot_path + "/usr/lib/!m4/* " + sysroot_path + "/usr/lib" )
+        os.system("rm -rf " + sysroot_path + "/usr/lib/!m4/")
+        
+
+#sys.exit(1)
 
 
 
