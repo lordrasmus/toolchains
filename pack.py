@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
 import os
+import re
 import sys
 import signal
 import subprocess
+import glob
 
 from pprint import pprint
 
@@ -68,7 +70,7 @@ target=values["ADK_TARGET_SYSTEM"]
 lib=values["ADK_TARGET_LIBC"]
 
 
-tc2="toolchain-" + arch + "-gcc-" + gcc
+tc2="toolchain-" + arch + "-gcc" # + gcc
 build_path="toolchain_" + target + "_" + lib
 sysroot_path="target_" + target + "_" + lib
 
@@ -80,14 +82,14 @@ if 'ADK_TARGET_CPU_TYPE' in values:
         if arch == "microblazeel":
                 build_path += "_microblazeel"
                 sysroot_path +=  "_microblazeel"
-                tc2="toolchain-" + arch + "_gcc-" + gcc
+                tc2="toolchain-" + arch + "_gcc"# + gcc
         else:
                 build_path += "_" + tmp
                 sysroot_path +=  "_" + tmp
-                tc2="toolchain-" + arch + "_" + tmp + "-gcc-" + gcc
+                tc2="toolchain-" + arch + "_" + tmp + "-gcc" # + gcc
                 
         if arch == "mipsel" and tmp == "mips32":
-                tc2="toolchain-mips32el-gcc-" + gcc
+                tc2="toolchain-mips32el-gcc" # + gcc
 
 if 'ADK_TARGET_ENDIAN_SUFFIX' in values:
          build_path += "" + values["ADK_TARGET_ENDIAN_SUFFIX"]
@@ -95,7 +97,7 @@ if 'ADK_TARGET_ENDIAN_SUFFIX' in values:
 
 #print( "Buildpath : "+ build_path )
 #print( "sysroot_path : "+ sysroot_path )
-print( "tc2 :" + tc2 )
+#print( "tc2 :" + tc2 )
 
 if 'ADK_TARGET_FLOAT' in values:
         build_path += "_" + values["ADK_TARGET_FLOAT"]
@@ -153,7 +155,7 @@ if not os.path.exists( sysroot_path + "/usr/lib/crt1.o" ):
         print( "" )
         sys.exit( 1)
 
-print( sysroot_path )
+#print( sysroot_path )
 if os.path.exists( sysroot_path + "/usr/lib/!m4"):
         print(" !! ERROR !m4 im sysroot gefunden. fixing")
         os.system("mv " + sysroot_path + "/usr/lib/!m4/* " + sysroot_path + "/usr/lib" )
@@ -163,13 +165,37 @@ if os.path.exists( sysroot_path + "/usr/lib/!m4"):
 #sys.exit(1)
 
 
+prefix_tmp = glob.glob( build_path + "/usr/bin/*-gcc" )
+#pprint( prefix_tmp )
+
+if len ( prefix_tmp ) > 1:
+        print("Error detecting prefix")
+        exit(1)
+
+prefix = prefix_tmp[0].replace(build_path + "/usr/bin/","")
+prefix = prefix[:-3]
+
+version=subprocess.getstatusoutput(prefix_tmp[0] + " --version")
+version=version[1].split("\n")[0]
+
+#print( version )
+
+regex_pattern = r'\b\d+\.\d+\.\d+\b'
+matches = re.findall(regex_pattern, version)
+
+# Gib die gefundenen Nummern aus
+#print(matches)
+
+version=matches[0]
+
+tc2 += "-" + version
 
 print( "Buildpath : "+ build_path )
 print( "Sysroot   : "+ sysroot_path )
+print( "Prefix    : " + prefix )
+print( "Version   : " + version)
 print( "Archive   : \033[01;32m" +tc2 + "\033[00m" )
 
-
-build_path
 
 
 if os.path.exists( tc2+ ".tar.xz"):
@@ -192,6 +218,11 @@ tc = build_path
 with open( tc+ "/openadk_hash", "w") as datei:
     subprocess.call("git rev-parse HEAD", shell=True, stdout=datei)
 
+with open( tc + "/prefix", "w") as f:
+        f.write( prefix )
+        
+os.system("cp .config " + tc + "/config" )
+
 os.system("cp .config " + tc + "/config" )
 os.system("cp /etc/os-release " + tc )
 
@@ -206,7 +237,7 @@ os.system("rm -f " + tc2 + ".tar.xz")
 os.system("tar -cf " + tc2 + ".tar " +tc2 )
 os.system("xz -e -9 -v " + tc2 +".tar")
 
-os.system("find " + tc2 + "/usr/bin")
+#os.system("find " + tc2 + "/usr/bin")
 
 print(  "Archive   : \033[01;32m" + tc2 + "\033[00m" )
 
