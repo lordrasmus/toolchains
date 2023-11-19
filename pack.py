@@ -127,11 +127,26 @@ if 'ADK_TARGET_BINFMT' in values:
                 tc2 += "_" + values["ADK_TARGET_BINFMT"] 
         
 
-if 'BUSYBOX_NOMMU' in values:
-        #if [[ $tmp != "" ]] ; then
+if 'ADK_TARGET_WITH_MMU' in values:
+        if values["ADK_TARGET_WITH_MMU"] == "n":
                 build_path += "_nommu"
                 sysroot_path += "_nommu"
                 tc2 += "_nommu"
+
+static_conf_ok=False
+if 'ADK_TARGET_USE_SHARED_LIBS_ONLY' in values:
+        if values["ADK_TARGET_USE_SHARED_LIBS_ONLY"] == "y":
+                static_conf_ok=True
+                
+
+if 'ADK_TARGET_USE_STATIC_LIBS_ONLY' in values:
+        if values["ADK_TARGET_USE_SHARED_LIBS_ONLY"] == "y":
+                static_conf_ok=True
+                tc2 += "_static"
+                
+#if static_conf_ok == False:
+#        print("ADK_TARGET_USE_SHARED_LIBS_ONLY oder ADK_TARGET_USE_STATIC_LIBS_ONLY setzen")
+#        exit(1)
 
 
 
@@ -142,7 +157,7 @@ print( "" )
 
 if not os.path.exists( build_path + "/usr/bin" ):
         print( "" )
-        print(  "build_path unvollständig : suche \n\033[01;32m" +build_path +"/usr/bin\033[00m")
+        print(  "build_path unvollständig : suche \n      \033[01;32m" +build_path +"/usr/bin\033[00m")
         
         os.system("ls | grep " + arch)
         print( "" )
