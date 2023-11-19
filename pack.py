@@ -99,6 +99,24 @@ if 'ADK_TARGET_ENDIAN_SUFFIX' in values:
 #print( "sysroot_path : "+ sysroot_path )
 #print( "tc2 :" + tc2 )
 
+"""
+        gcc version erkennen und anhängen
+"""
+prefix_tmp = glob.glob( build_path + "/usr/bin/*-gcc" )
+if len ( prefix_tmp ) > 1:
+        print("Error detecting prefix")
+        exit(1)
+
+prefix = prefix_tmp[0].replace(build_path + "/usr/bin/","")
+prefix = prefix[:-3]
+version=subprocess.getstatusoutput(prefix_tmp[0] + " --version")
+version=version[1].split("\n")[0]
+regex_pattern = r'\b\d+\.\d+\.\d+\b'
+matches = re.findall(regex_pattern, version)
+version=matches[0]
+tc2 += "-" + version 
+
+
 if 'ADK_TARGET_FLOAT' in values:
         build_path += "_" + values["ADK_TARGET_FLOAT"]
         sysroot_path += "_" + values["ADK_TARGET_FLOAT"]
@@ -125,7 +143,8 @@ if 'ADK_TARGET_BINFMT' in values:
                 build_path += "_" + values["ADK_TARGET_BINFMT"] 
                 sysroot_path += "_" + values["ADK_TARGET_BINFMT"] 
                 tc2 += "_" + values["ADK_TARGET_BINFMT"] 
-        
+
+
 
 if 'ADK_TARGET_WITH_MMU' in values:
         if values["ADK_TARGET_WITH_MMU"] == "n":
@@ -140,13 +159,14 @@ if 'ADK_TARGET_USE_SHARED_LIBS_ONLY' in values:
                 
 
 if 'ADK_TARGET_USE_STATIC_LIBS_ONLY' in values:
-        if values["ADK_TARGET_USE_SHARED_LIBS_ONLY"] == "y":
+        if values["ADK_TARGET_USE_STATIC_LIBS_ONLY"] == "y":
                 static_conf_ok=True
                 tc2 += "_static"
                 
-#if static_conf_ok == False:
-#        print("ADK_TARGET_USE_SHARED_LIBS_ONLY oder ADK_TARGET_USE_STATIC_LIBS_ONLY setzen")
-#        exit(1)
+                
+if static_conf_ok == False:
+        print("ADK_TARGET_USE_SHARED_LIBS_ONLY oder ADK_TARGET_USE_STATIC_LIBS_ONLY setzen")
+        exit(1)
 
 
 
@@ -180,30 +200,10 @@ if os.path.exists( sysroot_path + "/usr/lib/!m4"):
 #sys.exit(1)
 
 
-prefix_tmp = glob.glob( build_path + "/usr/bin/*-gcc" )
-#pprint( prefix_tmp )
 
-if len ( prefix_tmp ) > 1:
-        print("Error detecting prefix")
-        exit(1)
+        
+        
 
-prefix = prefix_tmp[0].replace(build_path + "/usr/bin/","")
-prefix = prefix[:-3]
-
-version=subprocess.getstatusoutput(prefix_tmp[0] + " --version")
-version=version[1].split("\n")[0]
-
-#print( version )
-
-regex_pattern = r'\b\d+\.\d+\.\d+\b'
-matches = re.findall(regex_pattern, version)
-
-# Gib die gefundenen Nummern aus
-#print(matches)
-
-version=matches[0]
-
-tc2 += "-" + version
 
 print( "Buildpath : "+ build_path )
 print( "Sysroot   : "+ sysroot_path )
