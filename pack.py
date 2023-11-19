@@ -49,7 +49,7 @@ pprint( values )
 
 arch=values["ADK_TARGET_CPU_ARCH"]
 
-
+"""
 gcc=None
 if "ADK_TOOLCHAIN_GCC_7" in values: gcc="7"
 if "ADK_TOOLCHAIN_GCC_8" in values: gcc="8"
@@ -63,7 +63,7 @@ if "ADK_TOOLCHAIN_GCC_KVX" in values: gcc="kvx"
 if gcc == None:
         print( "No GCC detect" )
         sys.exit(1)
-
+"""
 
 
 target=values["ADK_TARGET_SYSTEM"]
@@ -171,7 +171,7 @@ if static_conf_ok == False:
 
 
 print( "" )
-print( "GCC       : " + gcc  )
+print( "GCC       : " + version  )
 print( "ARCH      : " + arch )
 print( "" )
 
