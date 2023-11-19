@@ -33,7 +33,12 @@ for l in config_lines:
         if l.startswith("ADK_HOST_"): continue
         
         if l.startswith("BUSYBOX_NOMMU"): 
-                values["BUSYBOX_NOMMU"] = True
+                tmp = l.split("=")
+        
+                if tmp[0] == '\n': continue
+                tmp[1] = tmp[1].replace("\n","").replace("\"","")
+                
+                values[tmp[0]] = tmp[1]
                 continue
         
         if l.startswith("BUSYBOX_"): continue
@@ -99,6 +104,16 @@ if 'ADK_TARGET_ENDIAN_SUFFIX' in values:
 if 'ADK_TARGET_FLOAT' in values:
         build_path += "_" + values["ADK_TARGET_FLOAT"]
         sysroot_path += "_" + values["ADK_TARGET_FLOAT"]
+
+if 'ADK_TARGET_WITH_MMU' in values:
+        if values["ADK_TARGET_WITH_MMU"] == "n":
+                build_path += "_nommu"
+                sysroot_path += "_nommu"
+else:
+        if 'BUSYBOX_NOMMU' in values:
+                if values["BUSYBOX_NOMMU"] == "y":
+                        build_path += "_nommu"
+                        sysroot_path += "_nommu"
         
 print( "Buildpath : "+ build_path )
 #print( "sysroot_path : "+ sysroot_path )
@@ -127,7 +142,15 @@ tc2 += "-" + version
 if 'ADK_TARGET_FLOAT' in values:
         tc2 += "_" + values["ADK_TARGET_FLOAT"]
 
-
+if 'ADK_TARGET_WITH_MMU' in values:
+        if values["ADK_TARGET_WITH_MMU"] == "n":
+                tc2 += "_nommu"
+else:
+        if 'BUSYBOX_NOMMU' in values:
+                if values["BUSYBOX_NOMMU"] == "y":
+                        tc2 += "_nommu"
+                               
+                                
 if 'ADK_TARGET_ABI' in values:
         build_path += "_" + values["ADK_TARGET_ABI"]
         sysroot_path += "_"+ values["ADK_TARGET_ABI"]
@@ -151,11 +174,7 @@ if 'ADK_TARGET_BINFMT' in values:
 
 
 
-if 'ADK_TARGET_WITH_MMU' in values:
-        if values["ADK_TARGET_WITH_MMU"] == "n":
-                build_path += "_nommu"
-                sysroot_path += "_nommu"
-                tc2 += "_nommu"
+
 
 static_conf_ok=False
 if 'ADK_TARGET_USE_SHARED_LIBS_ONLY' in values:
