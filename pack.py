@@ -95,7 +95,12 @@ if 'ADK_TARGET_ENDIAN_SUFFIX' in values:
          build_path += "" + values["ADK_TARGET_ENDIAN_SUFFIX"]
          sysroot_path += "" + values["ADK_TARGET_ENDIAN_SUFFIX"]
 
-#print( "Buildpath : "+ build_path )
+
+if 'ADK_TARGET_FLOAT' in values:
+        build_path += "_" + values["ADK_TARGET_FLOAT"]
+        sysroot_path += "_" + values["ADK_TARGET_FLOAT"]
+        
+print( "Buildpath : "+ build_path )
 #print( "sysroot_path : "+ sysroot_path )
 #print( "tc2 :" + tc2 )
 
@@ -106,6 +111,8 @@ prefix_tmp = glob.glob( build_path + "/usr/bin/*-gcc" )
 if len ( prefix_tmp ) > 1:
         print("Error detecting prefix")
         exit(1)
+        
+print( prefix_tmp )
 
 prefix = prefix_tmp[0].replace(build_path + "/usr/bin/","")
 prefix = prefix[:-3]
@@ -118,8 +125,6 @@ tc2 += "-" + version
 
 
 if 'ADK_TARGET_FLOAT' in values:
-        build_path += "_" + values["ADK_TARGET_FLOAT"]
-        sysroot_path += "_" + values["ADK_TARGET_FLOAT"]
         tc2 += "_" + values["ADK_TARGET_FLOAT"]
 
 
