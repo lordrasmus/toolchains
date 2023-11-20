@@ -274,8 +274,13 @@ os.system("cp -r " + sysroot_path +"/* "+ tc +"/sysroot")
 os.system("rm -rf " + tc2 )
 os.system("cp -r " + tc + " " + tc2 )
 
-os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm lib; ln -s ../../sysroot/lib lib"  )
+os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm lib; ln -s ../../sysroot/usr/lib lib"  )
 os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm sys-include; ln -s ../../sysroot/usr/include sys-include"  )
+
+# aus irgendeinem grund muss im sysroot ales unter /lib nach /usr/lib kopiert werden
+# der link 2 zeilen vorher ist so aber richtig weil da die linker script liegen
+os.system("cp -a "+ tc2 + "/sysroot/lib/* " + tc2 + "/sysroot/usr/lib/"  )
+
 #os.system("ls "+ tc2 + "/usr/" + prefix[:-1] + "/lib/ -all "  )
 
 #exit(1)
