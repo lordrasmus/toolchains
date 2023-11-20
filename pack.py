@@ -274,7 +274,7 @@ os.system("cp -r " + sysroot_path +"/* "+ tc +"/sysroot")
 os.system("rm -rf " + tc2 )
 os.system("cp -r " + tc + " " + tc2 )
 
-os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm lib; ln -s ../../sysroot/usr/lib lib"  )
+os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm lib; ln -s ../../sysroot/lib lib"  )
 os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm sys-include; ln -s ../../sysroot/usr/include sys-include"  )
 #os.system("ls "+ tc2 + "/usr/" + prefix[:-1] + "/lib/ -all "  )
 
