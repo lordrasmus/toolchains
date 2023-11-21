@@ -172,4 +172,4 @@ else:
     print(" Invalid input. Please enter 'y' or 'n'.")
     
 os.system("cp " + toolchain_name +".tar.xz toolchains")
-os.system('cd toolchains; git add pack.py ; git add ' + toolchain_name + '.tar.xz; git commit -m "toolchain ' + toolchain_name + '" ; git push  ')
+os.system('cd toolchains; git add pack.py pack_br.py ; git add ' + toolchain_name + '.tar.xz; git commit -m "toolchain ' + toolchain_name + '" ; git push  ')
