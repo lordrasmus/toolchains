@@ -286,6 +286,9 @@ os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm sys-include; ln -s ../../s
 #os.system("cp -a "+ tc2 + "/sysroot/lib/* " + tc2 + "/sysroot/usr/lib/"  )
 os.system("cp -r "+ tc2 + "/sysroot/usr/lib/ldscripts " + tc2 + "/sysroot/lib/"  )
 
+os.system("cp -r "+ tc2 + "/sysroot/usr/lib/ck807/* " + tc2 + "/sysroot/usr/lib/"  )
+
+
 #os.system("ls "+ tc2 + "/usr/" + prefix[:-1] + "/lib/ -all "  )
 
 #exit(1)
