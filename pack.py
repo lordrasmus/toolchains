@@ -313,7 +313,7 @@ os.system("cp " + tc2 +".tar.xz toolchains")
 
 
 print("")
-response = input( "\033[01;32mstaring git commit. Do you want to proceed? (y/n):\033[00m ")
+response = input( "\033[01;32mstarting git commit. Do you want to proceed? (y/n):\033[00m ")
 
 # Check if the input is "y" or "n"
 if response.lower() == 'y':
