@@ -79,7 +79,9 @@ tc2="toolchain-" + arch + "-gcc" # + gcc
 build_path="toolchain_" + target + "_" + lib
 sysroot_path="target_" + target + "_" + lib
 
-
+if 'ADK_TARGET_CPU_H8300H' in values:
+        if values["ADK_TARGET_CPU_H8300H"] == "y":
+                tc2="toolchain-" + arch + "_h83000h-gcc" # + gcc
 
 if 'ADK_TARGET_CPU_TYPE' in values:
         tmp=values["ADK_TARGET_CPU_TYPE"]
