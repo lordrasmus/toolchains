@@ -63,6 +63,9 @@ if "ADK_TOOLCHAIN_GCC_10" in values: gcc="10"
 if "ADK_TOOLCHAIN_GCC_11" in values: gcc="11"
 if "ADK_TOOLCHAIN_GCC_12" in values: gcc="12"
 if "ADK_TOOLCHAIN_GCC_13" in values: gcc="13"
+if "ADK_TOOLCHAIN_GCC_14" in values: gcc="14"
+if "ADK_TOOLCHAIN_GCC_15" in values: gcc="15"
+if "ADK_TOOLCHAIN_GCC_16" in values: gcc="16"
 if "ADK_TOOLCHAIN_GCC_KVX" in values: gcc="kvx"
 
 if gcc == None:
