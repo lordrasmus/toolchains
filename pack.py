@@ -282,12 +282,14 @@ os.system("rm -rf " + tc2 )
 os.system("cp -r " + tc + " " + tc2 )
 
 
-#os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm lib; ln -s ../../sysroot/usr/lib lib"  )
-os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm lib; ln -s ../../sysroot/lib lib"  )
+# Point the toolchain's usr/<target>/lib symlink at sysroot/usr/lib (NOT
+# sysroot/lib): elf2flt.ld and the static-link bits crt*.o/libc.a etc.
+# live under sysroot/usr/lib for uClibc-ng FLAT toolchains, while
+# sysroot/lib is empty. Without this, ld-elf2flt fails to find its
+# linker script. Survey of 11 existing FLAT toolchain tarballs confirms
+# elf2flt.ld is always in sysroot/usr/lib, never in sysroot/lib.
+os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm lib; ln -s ../../sysroot/usr/lib lib"  )
 os.system("cd "+ tc2 + "/usr/" + prefix[:-1] + " ; rm sys-include; ln -s ../../sysroot/usr/include sys-include"  )
-
-# aus irgendeinem grund muss im sysroot ales unter /lib nach /usr/lib kopiert werden
-# der link 2 zeilen vorher ist so aber richtig weil da die linker script liegen
 #
 # update 1) scheinbar doch nicht. der link muss auf sysroot/lib zeigen. dafür dann aber die ldscripts nach /lib kopieren
 #os.system("cp -a "+ tc2 + "/sysroot/lib/* " + tc2 + "/sysroot/usr/lib/"  )
