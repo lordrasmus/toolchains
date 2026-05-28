@@ -110,6 +110,19 @@ if 'ADK_TARGET_FLOAT' in values:
         build_path += "_" + values["ADK_TARGET_FLOAT"]
         sysroot_path += "_" + values["ADK_TARGET_FLOAT"]
 
+if 'ADK_TARGET_ABI' in values:
+        build_path += "_" + values["ADK_TARGET_ABI"]
+        sysroot_path += "_"+ values["ADK_TARGET_ABI"]
+
+if 'ADK_TARGET_INSTRUCTION_SET' in values:
+        build_path += "_" + values["ADK_TARGET_INSTRUCTION_SET"]
+        sysroot_path += "_" + values["ADK_TARGET_INSTRUCTION_SET"]
+
+if 'ADK_TARGET_BINFMT' in values:
+        build_path += "_" + values["ADK_TARGET_BINFMT"]
+        sysroot_path += "_" + values["ADK_TARGET_BINFMT"]
+
+# nommu must be last to match openadk's mk/vars.mk (ADK_SUFFIX += _nommu, line 35)
 if 'ADK_TARGET_WITH_MMU' in values:
         if values["ADK_TARGET_WITH_MMU"] == "n":
                 build_path += "_nommu"
@@ -119,7 +132,7 @@ else:
                 if values["BUSYBOX_NOMMU"] == "y":
                         build_path += "_nommu"
                         sysroot_path += "_nommu"
-        
+
 print( "Buildpath : "+ build_path )
 #print( "sysroot_path : "+ sysroot_path )
 #print( "tc2 :" + tc2 )
@@ -156,26 +169,15 @@ else:
                         tc2 += "_nommu"
                                
                                 
+# build_path/sysroot_path already extended above; only update tc2 (tarball name) here.
 if 'ADK_TARGET_ABI' in values:
-        build_path += "_" + values["ADK_TARGET_ABI"]
-        sysroot_path += "_"+ values["ADK_TARGET_ABI"]
         tc2 += "_"+ values["ADK_TARGET_ABI"]
 
-
-
 if 'ADK_TARGET_INSTRUCTION_SET' in values:
-        
-        #if [[ $tmp != "" ]] ; then
-                build_path += "_" + values["ADK_TARGET_INSTRUCTION_SET"] 
-                sysroot_path += "_" + values["ADK_TARGET_INSTRUCTION_SET"] 
-                tc2 += "_" + values["ADK_TARGET_INSTRUCTION_SET"] 
+        tc2 += "_" + values["ADK_TARGET_INSTRUCTION_SET"]
 
 if 'ADK_TARGET_BINFMT' in values:
-        
-        #if [[ $tmp != "" ]] ; then
-                build_path += "_" + values["ADK_TARGET_BINFMT"] 
-                sysroot_path += "_" + values["ADK_TARGET_BINFMT"] 
-                tc2 += "_" + values["ADK_TARGET_BINFMT"] 
+        tc2 += "_" + values["ADK_TARGET_BINFMT"]
 
 
 
