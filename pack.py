@@ -90,8 +90,10 @@ if 'ADK_TARGET_CPU_TYPE' in values:
         tmp=values["ADK_TARGET_CPU_TYPE"]
         
         if arch == "microblazeel":
-                build_path += "_microblazeel"
-                sysroot_path +=  "_microblazeel"
+                # build_path bekommt unten noch das ENDIAN_SUFFIX "el" angehängt,
+                # also hier nur den CPU_TYPE ("microblaze") wie im else-Zweig
+                build_path += "_" + tmp
+                sysroot_path +=  "_" + tmp
                 tc2="toolchain-" + arch + "_gcc"# + gcc
         else:
                 build_path += "_" + tmp
