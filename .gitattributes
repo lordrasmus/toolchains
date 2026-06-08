@@ -1,1 +1,2 @@
 linux-kvx.tar.xz filter=lfs diff=lfs merge=lfs -text
+linux-nds32-3.4.112.tar.xz filter=lfs diff=lfs merge=lfs -text
