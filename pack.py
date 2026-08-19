@@ -320,7 +320,7 @@ if not os.path.exists( "toolchains" ):
 
 if not os.path.exists( "toolchains" ):
 	print("toolchain git error" )
-	os.exit( 1 )
+	sys.exit( 1 )
         
 os.system("cp " + tc2 +".tar.xz toolchains")
 
