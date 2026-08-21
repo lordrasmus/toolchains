@@ -197,8 +197,16 @@ if 'ADK_TARGET_USE_STATIC_LIBS_ONLY' in values:
                 tc2 += "_static"
                 
                 
+# Beide Varianten im Sysroot: kein Namenszusatz, die Toolchain kann shared
+# und statisch linken.
+if 'ADK_TARGET_USE_SHARED_AND_STATIC_LIBS' in values:
+        if values["ADK_TARGET_USE_SHARED_AND_STATIC_LIBS"] == "y":
+                static_conf_ok=True
+
+
 if static_conf_ok == False:
-        print("ADK_TARGET_USE_SHARED_LIBS_ONLY oder ADK_TARGET_USE_STATIC_LIBS_ONLY setzen")
+        print("ADK_TARGET_USE_SHARED_LIBS_ONLY, ADK_TARGET_USE_STATIC_LIBS_ONLY")
+        print("oder ADK_TARGET_USE_SHARED_AND_STATIC_LIBS setzen")
         exit(1)
 
 
