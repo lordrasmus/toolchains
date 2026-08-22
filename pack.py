@@ -282,14 +282,30 @@ os.system("cp .config " + tc + "/config" )
 os.system("cp .config " + tc + "/config" )
 os.system("cp /etc/os-release " + tc )
 
-os.system("mkdir -p " +tc+"/sysroot")
-os.system("cp -r " + sysroot_path +"/* "+ tc +"/sysroot")
-
-
-
-
+# Archivlayout: Toolchain und Sysroot liegen nebeneinander, genau wie im
+# openadk-Baum. gcc ist mit --with-sysroot='${prefix}/../../target_<suffix>'
+# konfiguriert (toolchain/gcc/Makefile) und rechnet den Pfad zur Laufzeit
+# relativ zum Aufrufort neu, uebernimmt das Ergebnis aber nur, wenn access()
+# darauf gelingt (gcc/gcc.cc, TARGET_SYSTEM_ROOT_RELOCATABLE). Solange das
+# Sysroot flach unter <archiv>/sysroot lag, war das Archiv eine Ebene flacher
+# als der Build-Baum, der relative Pfad zeigte aus dem Archiv heraus und gcc
+# benutzte weiter den einkompilierten Absolutpfad ins Build-Verzeichnis: fuer
+# fremde Benutzer nicht lesbar ("cc1: error: ...: Permission denied", z.B. bei
+# einem Build unter /root), auf fremden Maschinen gar nicht vorhanden
+# ("stdio.h: No such file or directory").
+#
+# Die Symlinks in der Archivwurzel halten <archiv>/usr, <archiv>/sysroot und die
+# Metadateien fuer CI, uc_devel und build_tool.sh unveraendert erreichbar;
+# innerhalb von toolchain_<suffix> sieht der Baum aus wie die alte Archivwurzel,
+# damit bleiben auch die relativen Links unten und in der CI gueltig.
 os.system("rm -rf " + tc2 )
-os.system("cp -r " + tc + " " + tc2 )
+os.system("mkdir -p " + tc2 )
+os.system("cp -r " + build_path + " " + tc2 + "/" + build_path )
+os.system("cp -r " + sysroot_path + " " + tc2 + "/" + sysroot_path )
+os.system("cd " + tc2 + "/" + build_path + " ; ln -s ../" + sysroot_path + " sysroot" )
+os.system("cd " + tc2 + " ; ln -s " + build_path + "/usr usr ; ln -s " + sysroot_path + " sysroot" )
+for meta_file in ( "config", "os-release", "prefix", "openadk_hash" ):
+        os.system("cd " + tc2 + " ; ln -s " + build_path + "/" + meta_file + " " + meta_file )
 
 
 # Point the toolchain's usr/<target>/lib symlink at sysroot/usr/lib (NOT
