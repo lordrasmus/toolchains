@@ -41,11 +41,10 @@ def run(cmd, **kw):
 
 
 def find_gcc(root):
-    hits = glob.glob(root + "/usr/bin/*-gcc")
-    hits = [h for h in hits if not h.endswith(("-gcc-ar", "-gcc-nm", "-gcc-ranlib"))]
-    if len(hits) != 1:
-        raise RuntimeError("kein eindeutiges gcc unter %s/usr/bin: %s" % (root, hits))
-    return hits[0]
+    hits = [h for h in glob.glob(root + "/usr/bin/*-gcc") if os.access(h, os.X_OK)]
+    if not hits:
+        raise RuntimeError("kein *-gcc unter %s/usr/bin" % root)
+    return sorted(hits, key=len)[0]
 
 
 def sysroot_names(gcc):
@@ -119,12 +118,26 @@ def process(tarball, out_dir, keep, check_only):
             return False
         root = roots[0]
 
-        if os.path.islink(os.path.join(root, "usr")):
-            print("    schon umgebaut, uebersprungen")
+        usr, sysroot = os.path.join(root, "usr"), os.path.join(root, "sysroot")
+        if os.path.islink(usr) and os.path.islink(sysroot) and glob.glob(root + "/toolchain_*"):
+            if not check_only:
+                print("    schon umgebaut, uebersprungen")
+                return True
+            # --check prueft auch ein bereits umgebautes Archiv wirklich durch
+            problems = verify(root)
+            if problems:
+                print("    umgebaut, aber NICHT in Ordnung:")
+                for p in problems:
+                    print("      " + p)
+                return False
+            print("    umgebaut und relozierbar (%s)"
+                  % run(find_gcc(root) + " -print-sysroot").stdout.strip())
             return True
-        if not os.path.isdir(os.path.join(root, "sysroot")):
-            print("    kein sysroot/ im Archiv, uebersprungen")
-            return False
+        if os.path.islink(usr) or not os.path.isdir(usr) or not os.path.isdir(sysroot):
+            # z.B. ein Buildroot-SDK: eigene Struktur (usr -> ., relocate-sdk.sh)
+            # und ein eigener Relozierungsmechanismus -- nicht anfassen
+            print("    kein openadk-Layout (usr/ + sysroot/), nicht angefasst")
+            return True
 
         gcc = find_gcc(root)
         build_name, target_name = sysroot_names(gcc)
@@ -189,13 +202,24 @@ def main(argv):
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
 
-    ok = failed = 0
+    ok, skipped, failed = [], [], []
     for t in args:
-        if process(t, out_dir, keep, check_only):
-            ok += 1
-        else:
-            failed += 1
-    print("\n%d ok, %d fehlgeschlagen" % (ok, failed))
+        name = os.path.basename(t)
+        try:
+            if process(t, out_dir, keep, check_only):
+                ok.append(name)
+            else:
+                failed.append(name)
+        except Exception as e:
+            # z.B. Buildroot-Packs, deren gcc ein anders gebautes Sysroot hat:
+            # nicht anfassen, nur berichten
+            print("    UEBERSPRUNGEN: %s" % e)
+            skipped.append(name)
+
+    print("\n%d ok, %d uebersprungen, %d fehlgeschlagen" % (len(ok), len(skipped), len(failed)))
+    for label, lst in (("uebersprungen", skipped), ("fehlgeschlagen", failed)):
+        for n in lst:
+            print("  %-14s %s" % (label + ":", n))
     return 1 if failed else 0
 
 
