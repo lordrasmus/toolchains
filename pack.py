@@ -89,9 +89,11 @@ if 'ADK_TARGET_CPU_H8300H' in values:
 if 'ADK_TARGET_CPU_TYPE' in values:
         tmp=values["ADK_TARGET_CPU_TYPE"]
         
-        if arch == "microblazeel":
-                # build_path bekommt unten noch das ENDIAN_SUFFIX "el" angehängt,
-                # also hier nur den CPU_TYPE ("microblaze") wie im else-Zweig
+        if arch.startswith("microblaze"):
+                # CPU_TYPE ist hier immer "microblaze" und steckt schon in arch;
+                # der else-Zweig gaebe "microblaze_microblaze". build_path
+                # bekommt unten noch das ENDIAN_SUFFIX ("el" bei little endian,
+                # bei big endian keins), also hier nur den CPU_TYPE anhaengen.
                 build_path += "_" + tmp
                 sysroot_path +=  "_" + tmp
                 tc2="toolchain-" + arch + "_gcc"# + gcc
