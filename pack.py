@@ -103,6 +103,16 @@ if 'ADK_TARGET_CPU_TYPE' in values:
         if arch == "mipsel" and tmp == "mips32":
                 tc2="toolchain-mips32el-gcc" # + gcc
 
+# riscv bekommt von openadk kein ADK_TARGET_CPU_TYPE; die ISA-Variante steht
+# allein in ADK_TARGET_GCC_ARCH (rv64imafdc, rv32imac, ...), das als
+# --with-arch an gcc geht. Ohne sie hiessen rv64ima, rv64imac und rv64imafdc
+# alle "toolchain-riscv64-gcc-<version>", also soft- und hard-float gleich.
+# Nur uebernehmen, wenn der Wert ein einfacher Bezeichner ist: bei bfin, csky,
+# sh und h8300 steht dort ein Compilerflag ("-mcpu=bf512", "-m4a"), und die
+# haben ohnehin einen CPU_TYPE.
+elif re.match(r"^[A-Za-z0-9_]+$", values.get("ADK_TARGET_GCC_ARCH", "")):
+        tc2 = "toolchain-" + arch + "_" + values["ADK_TARGET_GCC_ARCH"] + "-gcc"
+
 if 'ADK_TARGET_ENDIAN_SUFFIX' in values:
          build_path += "" + values["ADK_TARGET_ENDIAN_SUFFIX"]
          sysroot_path += "" + values["ADK_TARGET_ENDIAN_SUFFIX"]
