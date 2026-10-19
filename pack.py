@@ -164,11 +164,17 @@ print( prefix_tmp )
 prefix = prefix_tmp[0].replace(build_path + "/usr/bin/","")
 prefix = prefix[:-3]
 version=subprocess.getstatusoutput(prefix_tmp[0] + " --version")
-version=version[1].split("\n")[0]
+version_line=version[1].split("\n")[0]
 regex_pattern = r'\b\d+\.\d+\.\d+\b'
-matches = re.findall(regex_pattern, version)
+matches = re.findall(regex_pattern, version_line)
 version=matches[0]
-tc2 += "-" + version 
+# Ein gcc aus dem Trunk oder kurz vor dem Release meldet sich als
+# "17.0.0 20261019 (experimental)" bzw. "(prerelease)". Alte Staende brauchen
+# wir nicht, also "gcc-17-pre" statt eines Datums; ein neuer Stand ersetzt den
+# alten unter demselben Namen.
+if "(experimental)" in version_line or "(prerelease)" in version_line:
+        version = version.split(".")[0] + "-pre"
+tc2 += "-" + version
 
 
 if 'ADK_TARGET_FLOAT' in values:
@@ -294,6 +300,20 @@ os.system("cp .config " + tc + "/config" )
 os.system("cp .config " + tc + "/config" )
 os.system("cp /etc/os-release " + tc )
 
+# gcc aus git: openadk klont ohne .git, der Stand stuende sonst nirgends.
+# Commit (dl/gcc-git.COMMIT, beim Anlegen der Quelle geschrieben) und die
+# angewendeten Patches gehen mit ins Archiv.
+meta_files = [ "config", "os-release", "prefix", "openadk_hash" ]
+if values.get("ADK_TOOLCHAIN_GCC_GIT") == "y":
+        if os.path.exists("dl/gcc-git.COMMIT"):
+                os.system("cp dl/gcc-git.COMMIT " + tc + "/gcc_commit")
+                meta_files.append("gcc_commit")
+        else:
+                print(" !! WARNUNG: dl/gcc-git.COMMIT fehlt, gcc-Stand unbekannt")
+        if os.path.isdir("toolchain/gcc/patches/git"):
+                os.system("rm -rf " + tc + "/gcc_patches; cp -r toolchain/gcc/patches/git " + tc + "/gcc_patches")
+                meta_files.append("gcc_patches")
+
 # Archivlayout: Toolchain und Sysroot liegen nebeneinander, genau wie im
 # openadk-Baum. gcc ist mit --with-sysroot='${prefix}/../../target_<suffix>'
 # konfiguriert (toolchain/gcc/Makefile) und rechnet den Pfad zur Laufzeit
@@ -316,7 +336,7 @@ os.system("cp -r " + build_path + " " + tc2 + "/" + build_path )
 os.system("cp -r " + sysroot_path + " " + tc2 + "/" + sysroot_path )
 os.system("cd " + tc2 + "/" + build_path + " ; ln -s ../" + sysroot_path + " sysroot" )
 os.system("cd " + tc2 + " ; ln -s " + build_path + "/usr usr ; ln -s " + sysroot_path + " sysroot" )
-for meta_file in ( "config", "os-release", "prefix", "openadk_hash" ):
+for meta_file in meta_files:
         os.system("cd " + tc2 + " ; ln -s " + build_path + "/" + meta_file + " " + meta_file )
 
 
