@@ -16,6 +16,112 @@ def strg_c_handler(signum, frame):
 
 signal.signal(signal.SIGINT, strg_c_handler)
 
+
+def read_config( path ):
+        values = {}
+        with open( path, 'r' ) as config_file:
+                for l in config_file:
+                        if l.startswith("#") or "=" not in l: continue
+                        k, v = l.split("=", 1)
+                        values[k] = v.strip().replace("\"", "")
+        return values
+
+
+# Archive name, field by field and always in this order:
+#
+#   toolchain-<arch>[-<cpu>]-gcc-<version>-<threads>-<link>
+#            [-nommu-<format>][-<abi>][-<float>][-<instruction set>]
+#
+# threads is npt, lt or no (as in the CI target names); it also says whether
+# gcc has real TLS -- openadk builds it with --enable-tls for NPTL only
+# (toolchain/gcc/Makefile) -- and check_tls() below checks gcc -v for it.
+# link is static for ADK_TARGET_USE_STATIC_LIBS_ONLY, shared otherwise.
+def toolchain_name( values, version ):
+        arch = values["ADK_TARGET_CPU_ARCH"]
+
+        cpu = None
+        if values.get("ADK_TARGET_CPU_H8300H") == "y":
+                cpu = "h8300h"
+        elif values.get("ADK_TARGET_CPU_TYPE"):
+                cpu = values["ADK_TARGET_CPU_TYPE"]
+                # microblaze/microblazeel, mips64/mips64el: nothing to add
+                if arch.startswith( cpu ):
+                        cpu = None
+        # riscv has no CPU_TYPE, its ISA is ADK_TARGET_GCC_ARCH; on bfin,
+        # csky, sh and h8300 that field holds a compiler flag instead.
+        elif re.match(r"^[A-Za-z0-9_]+$", values.get("ADK_TARGET_GCC_ARCH", "")):
+                cpu = values["ADK_TARGET_GCC_ARCH"]
+                if arch.startswith( cpu ):      # i686: arch and ISA are one
+                        cpu = None
+
+        if values.get("ADK_TARGET_WITH_NPTL") == "y":
+                threads = "npt"
+        elif values.get("ADK_TARGET_WITH_LT") == "y":
+                threads = "lt"
+        else:
+                threads = "no"
+
+        link = "static" if values.get("ADK_TARGET_USE_STATIC_LIBS_ONLY") == "y" else "shared"
+
+        nommu = values.get("ADK_TARGET_WITH_MMU") == "n" or \
+                ( "ADK_TARGET_WITH_MMU" not in values and values.get("BUSYBOX_NOMMU") == "y" )
+
+        name = "toolchain-" + arch
+        if cpu:
+                name += "-" + cpu
+        name += "-gcc-" + version + "-" + threads + "-" + link
+        if nommu:
+                fmt = values.get("ADK_TARGET_BINFMT")
+                if not fmt:     # older openadk: only ADK_TARGET_BINFMT_<FMT>=y
+                        fmt = "elf"
+                        for f in ( "flat", "fdpic", "elf" ):     # not FLAT_ONE, a FLAT option
+                                if values.get("ADK_TARGET_BINFMT_" + f.upper()) == "y":
+                                        fmt = f
+                                        break
+                name += "-nommu-" + fmt
+        for key in ( "ADK_TARGET_ABI", "ADK_TARGET_FLOAT", "ADK_TARGET_INSTRUCTION_SET" ):
+                if values.get( key ):
+                        name += "-" + values[key]
+        return name, threads
+
+
+# The thread field says how openadk configured gcc: --enable-tls for NPTL
+# only.  Check that against "gcc -v".  What gcc then emits is reported, not
+# enforced: nios2 emits real TLS whatever --disable-tls says
+# (gcc/config/nios2/nios2.cc: TARGET_HAVE_TLS is TARGET_LINUX_ABI).
+def check_tls( gcc, threads ):
+        conf = subprocess.run( [ gcc, "-v" ], capture_output=True, text=True ).stderr
+        if "--enable-tls" in conf:
+                configured = True
+        elif "--disable-tls" in conf:
+                configured = False
+        else:
+                configured = None
+        if configured is not None and configured != ( threads == "npt" ):
+                print( " !! ERROR: Name sagt threads=" + threads + ", gcc ist mit "
+                       + ( "--enable-tls" if configured else "--disable-tls" ) + " gebaut" )
+                sys.exit( 1 )
+
+        r = subprocess.run( [ gcc, "-O2", "-S", "-xc", "-", "-o", "-" ],
+                            input="extern __thread int x; int f(void){return x;}\n",
+                            capture_output=True, text=True )
+        if r.returncode != 0:
+                print( r.stderr )
+                print( " !! ERROR: gcc kann keine __thread-Variable uebersetzen" )
+                sys.exit( 1 )
+        emulated = "__emutls" in r.stdout
+        print( "TLS       : " + ( "emuliert" if emulated else "echt" ) + " im erzeugten Code" )
+        if emulated == ( threads == "npt" ):
+                print( " !! HINWEIS: das Backend haelt sich nicht an --"
+                       + ( "enable" if configured else "disable" ) + "-tls" )
+
+
+# pack.py --name <openadk config> <gcc version>: only print the name,
+# for renaming archives that already exist.
+if len( sys.argv ) == 4 and sys.argv[1] == "--name":
+        print( toolchain_name( read_config( sys.argv[2] ), sys.argv[3] )[0] )
+        sys.exit( 0 )
+
 if len( sys.argv ) == 1:
         with open(".config", 'r') as config_file:
                 config_lines = config_file.readlines()
@@ -78,42 +184,16 @@ target=values["ADK_TARGET_SYSTEM"]
 lib=values["ADK_TARGET_LIBC"]
 
 
-tc2="toolchain-" + arch + "-gcc" # + gcc
 build_path="toolchain_" + target + "_" + lib
 sysroot_path="target_" + target + "_" + lib
 
-if 'ADK_TARGET_CPU_H8300H' in values:
-        if values["ADK_TARGET_CPU_H8300H"] == "y":
-                tc2="toolchain-" + arch + "_h83000h-gcc" # + gcc
-
+# openadk's directory names; the archive name comes from toolchain_name().
 if 'ADK_TARGET_CPU_TYPE' in values:
         tmp=values["ADK_TARGET_CPU_TYPE"]
-        
-        if arch.startswith("microblaze"):
-                # CPU_TYPE ist hier immer "microblaze" und steckt schon in arch;
-                # der else-Zweig gaebe "microblaze_microblaze". build_path
-                # bekommt unten noch das ENDIAN_SUFFIX ("el" bei little endian,
-                # bei big endian keins), also hier nur den CPU_TYPE anhaengen.
-                build_path += "_" + tmp
-                sysroot_path +=  "_" + tmp
-                tc2="toolchain-" + arch + "_gcc"# + gcc
-        else:
-                build_path += "_" + tmp
-                sysroot_path +=  "_" + tmp
-                tc2="toolchain-" + arch + "_" + tmp + "-gcc" # + gcc
-                
-        if arch == "mipsel" and tmp == "mips32":
-                tc2="toolchain-mips32el-gcc" # + gcc
-
-# riscv bekommt von openadk kein ADK_TARGET_CPU_TYPE; die ISA-Variante steht
-# allein in ADK_TARGET_GCC_ARCH (rv64imafdc, rv32imac, ...), das als
-# --with-arch an gcc geht. Ohne sie hiessen rv64ima, rv64imac und rv64imafdc
-# alle "toolchain-riscv64-gcc-<version>", also soft- und hard-float gleich.
-# Nur uebernehmen, wenn der Wert ein einfacher Bezeichner ist: bei bfin, csky,
-# sh und h8300 steht dort ein Compilerflag ("-mcpu=bf512", "-m4a"), und die
-# haben ohnehin einen CPU_TYPE.
-elif re.match(r"^[A-Za-z0-9_]+$", values.get("ADK_TARGET_GCC_ARCH", "")):
-        tc2 = "toolchain-" + arch + "_" + values["ADK_TARGET_GCC_ARCH"] + "-gcc"
+        # microblaze: CPU_TYPE is always "microblaze", the endianness suffix
+        # follows below with ENDIAN_SUFFIX.
+        build_path += "_" + tmp
+        sysroot_path +=  "_" + tmp
 
 if 'ADK_TARGET_ENDIAN_SUFFIX' in values:
          build_path += "" + values["ADK_TARGET_ENDIAN_SUFFIX"]
@@ -174,34 +254,8 @@ version=matches[0]
 # alten unter demselben Namen.
 if "(experimental)" in version_line or "(prerelease)" in version_line:
         version = version.split(".")[0] + "-pre"
-tc2 += "-" + version
-
-
-if 'ADK_TARGET_FLOAT' in values:
-        tc2 += "_" + values["ADK_TARGET_FLOAT"]
-
-if 'ADK_TARGET_WITH_MMU' in values:
-        if values["ADK_TARGET_WITH_MMU"] == "n":
-                tc2 += "_nommu"
-else:
-        if 'BUSYBOX_NOMMU' in values:
-                if values["BUSYBOX_NOMMU"] == "y":
-                        tc2 += "_nommu"
-                               
-                                
-# build_path/sysroot_path already extended above; only update tc2 (tarball name) here.
-if 'ADK_TARGET_ABI' in values:
-        tc2 += "_"+ values["ADK_TARGET_ABI"]
-
-if 'ADK_TARGET_INSTRUCTION_SET' in values:
-        tc2 += "_" + values["ADK_TARGET_INSTRUCTION_SET"]
-
-if 'ADK_TARGET_BINFMT' in values:
-        tc2 += "_" + values["ADK_TARGET_BINFMT"]
-
-
-
-
+tc2, threads = toolchain_name( values, version )
+check_tls( prefix_tmp[0], threads )
 
 static_conf_ok=False
 if 'ADK_TARGET_USE_SHARED_LIBS_ONLY' in values:
@@ -212,7 +266,6 @@ if 'ADK_TARGET_USE_SHARED_LIBS_ONLY' in values:
 if 'ADK_TARGET_USE_STATIC_LIBS_ONLY' in values:
         if values["ADK_TARGET_USE_STATIC_LIBS_ONLY"] == "y":
                 static_conf_ok=True
-                tc2 += "_static"
                 
                 
 # Beide Varianten im Sysroot: kein Namenszusatz, die Toolchain kann shared
