@@ -30,7 +30,7 @@ def read_config( path ):
 # Archive name, field by field and always in this order:
 #
 #   toolchain-<arch>[-<cpu>]-gcc-<version>-<threads>-<link>
-#            [-nommu-<format>][-<abi>][-<float>][-<instruction set>]
+#            [-nommu-<format>][-<abi>][-<float>][-<instruction set>][-fpud][-sfp]
 #
 # threads is npt, lt or no (as in the CI target names); it also says whether
 # gcc has real TLS -- openadk builds it with --enable-tls for NPTL only
@@ -82,6 +82,14 @@ def toolchain_name( values, version ):
         for key in ( "ADK_TARGET_ABI", "ADK_TARGET_FLOAT", "ADK_TARGET_INSTRUCTION_SET" ):
                 if values.get( key ):
                         name += "-" + values[key]
+        # ARC HS with the double precision FPU; the single precision one is
+        # the default and keeps the name it always had.
+        if values.get("ADK_TARGET_ARCH_ARC_WITH_FPU_DP") == "y":
+                name += "-fpud"
+        # libgcc lets the C library keep the soft-float environment; the
+        # toolchain without it stays available under the old name.
+        if values.get("ADK_TOOLCHAIN_GCC_SOFTFP_FENV") == "y":
+                name += "-sfp"
         return name, threads
 
 
