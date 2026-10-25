@@ -74,7 +74,7 @@ def toolchain_name( values, version ):
                 fmt = values.get("ADK_TARGET_BINFMT")
                 if not fmt:     # older openadk: only ADK_TARGET_BINFMT_<FMT>=y
                         fmt = "elf"
-                        for f in ( "flat", "fdpic", "elf" ):     # not FLAT_ONE, a FLAT option
+                        for f in ( "flat", "fdpic", "dsbt", "elf" ):     # not FLAT_ONE, a FLAT option
                                 if values.get("ADK_TARGET_BINFMT_" + f.upper()) == "y":
                                         fmt = f
                                         break
