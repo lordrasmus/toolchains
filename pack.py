@@ -42,6 +42,11 @@ def toolchain_name( values, version ):
         cpu = None
         if values.get("ADK_TARGET_CPU_H8300H") == "y":
                 cpu = "h8300h"
+        # powerpc with SPE (e500) has its own ABI and no FPU; the CPU is
+        # only in GCC_CPU there, and without it the name would say plain
+        # hard-float ppc.
+        elif values.get("ADK_TARGET_ARCH_PPC_WITH_SPE") == "y" and values.get("ADK_TARGET_GCC_CPU"):
+                cpu = values["ADK_TARGET_GCC_CPU"]
         elif values.get("ADK_TARGET_CPU_TYPE"):
                 cpu = values["ADK_TARGET_CPU_TYPE"]
                 # microblaze/microblazeel, mips64/mips64el: nothing to add
